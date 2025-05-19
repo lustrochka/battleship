@@ -1,38 +1,20 @@
 import { WebSocketServer } from 'ws';
-import DB from './db';
+import WSController from './ws_controller';
 
 class WsServer {
   #server;
-  #db;
+  #controller;
+
   constructor() {
     this.#server = new WebSocketServer({ port: 3000 });
-    this.#db = new DB();
+    this.#controller = new WSController();
   }
 
   start() {
     this.#server.on('connection', (socket) => {
       socket.on('message', (message) => {
         console.log(message.toString());
-        try {
-          const parsedMsg = JSON.parse(message.toString());
-          const innerData = JSON.parse(parsedMsg.data);
-
-          if (parsedMsg.type === 'reg') {
-            const data = JSON.stringify(innerData);
-
-            socket.send(
-              JSON.stringify({
-                type: 'reg',
-                data,
-                id: 0,
-              }),
-            );
-
-            this.#db.addPlayer(innerData.name, innerData.password);
-          }
-        } catch (e) {
-          console.error('error while parsing JSON:', e);
-        }
+        this.#controller.chooseAction(message, socket);
       });
 
       socket.on('close', () => {
