@@ -23,6 +23,10 @@ class WSController {
         case 'create_room':
           this.createRoom();
           break;
+        case "add_user_to_room":
+            this.createGame(innerData.indexRoom);
+            break;
+
       }
     } catch (e) {
       console.error('error while parsing JSON:', e);
@@ -63,6 +67,37 @@ class WSController {
         id: 0,
       }),
     );
+  }
+
+  createGame(index: string | number) {
+    const room = this.#db.getRoom(index);
+    const firstUser = this.#db.getUserByIndex(room[0].index);
+    const secondUser = this.#db.getUser(webSocket);
+
+    webSocket.send(
+      JSON.stringify({
+        type: 'create_game',
+        data: JSON.stringify({
+            idGame: this.#db.getGameIndex(),  
+            idPlayer: secondUser?.index,
+        }),
+        id: 0,
+      }),
+    );
+
+    (firstUser[0] as WebSocket).send(
+      JSON.stringify({
+        type: 'create_game',
+        data: JSON.stringify({
+            idGame: 0,  
+            idPlayer: firstUser[1],
+        }),
+        id: 0,
+      }),
+    );
+
+    this.#db.removeRoom(index);
+    this.updateRoom();
   }
 }
 

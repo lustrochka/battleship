@@ -16,7 +16,7 @@ class WsServer {
     });
 
     this.#server.on('connection', (socket) => {
-      console.log('aaaaaaaa');
+      console.log('Client connected');
       socket.on('message', (message) => {
         console.log(message.toString());
         this.#controller.chooseAction(message, socket);

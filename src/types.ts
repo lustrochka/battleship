@@ -3,9 +3,8 @@ export type playerType = {
   index: string | number;
 };
 
-export type RoomType = {
-  roomId: string | number;
-  roomUsers: playerType[];
+export type RoomsType = {
+  [key: string | number]: playerType[];
 };
 
 export type RegDataType = {
