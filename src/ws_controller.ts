@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import DB from './db';
 import { RegDataType } from './types';
+import { sendMessage } from './sendMessage';
 
 let webSocket: WebSocket;
 
@@ -36,20 +37,14 @@ class WSController {
   register(innerData: RegDataType) {
     const index = this.#db.addPlayer(innerData.name, webSocket);
 
-    const data = JSON.stringify({
+    const data = {
       name: innerData.name,
       index,
       error: false,
       errorText: '',
-    });
+    };
 
-    webSocket.send(
-      JSON.stringify({
-        type: 'reg',
-        data,
-        id: 0,
-      }),
-    );
+    sendMessage(webSocket, 'reg', data)
 
     this.updateRoom();
   }
@@ -60,41 +55,26 @@ class WSController {
   }
 
   updateRoom() {
-    webSocket.send(
-      JSON.stringify({
-        type: 'update_room',
-        data: JSON.stringify(this.#db.getRooms()),
-        id: 0,
-      }),
-    );
+    sendMessage(webSocket, 'update_room', this.#db.getRooms())
   }
 
   createGame(index: string | number) {
     const room = this.#db.getRoom(index);
     const firstUser = this.#db.getUserByIndex(room[0].index);
     const secondUser = this.#db.getUser(webSocket);
-
-    webSocket.send(
-      JSON.stringify({
-        type: 'create_game',
-        data: JSON.stringify({
+    const data = {
             idGame: this.#db.getGameIndex(),  
             idPlayer: secondUser?.index,
-        }),
-        id: 0,
-      }),
-    );
+        }
 
-    (firstUser[0] as WebSocket).send(
-      JSON.stringify({
-        type: 'create_game',
-        data: JSON.stringify({
+    const dataSecondUser = {
             idGame: 0,  
             idPlayer: firstUser[1],
-        }),
-        id: 0,
-      }),
-    );
+        };
+
+    sendMessage(webSocket, 'create_game', data);
+    sendMessage(firstUser[0] as WebSocket, 'create_game', dataSecondUser);
+
 
     this.#db.removeRoom(index);
     this.updateRoom();
